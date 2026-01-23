@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Countdownme</title>
+    <style>
+        /* CSS Design */
+        :root {
+            --primary-color: #1c2e35;
+            --accent-color: #263a43;
+            --text-color: #ffffff;
+            --title-size: 1.5rem;
+            --bg-image: none;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--primary-color);
+            background-image: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            position: relative;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: var(--text-color);
+            padding: 20px;
+            transition: background 0.3s ease;
+            overflow: hidden;
+        }
+
+        /* Background Image Layer */
+        body::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image: var(--bg-image);
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            z-index: -1;
+            transition: opacity 0.5s ease;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* BLINK ANIMATION */
+        @keyframes blinkEffect {
+            0% { background-color: var(--primary-color); }
+            50% { background-color: #ff0000; }
+            100% { background-color: var(--primary-color); }
+        }
+
+        .alert-active {
+            animation: blinkEffect 0.5s linear infinite !important;
+            background-image: none !important;
+        }
+        
+        .alert-active::before {
+            display: none !important;
+        }
+
+        .container {
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 0.4s ease, transform 0.4s ease;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 3rem;
+            border-radius: 40px;
+            backdrop-filter: blur(15px);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            max-width: 1000px;
+            width: 90%;
+            z-index: 10;
+        }
+
+        .container.visible { opacity: 1; transform: translateY(0); }
+
+        .icon-btn {
+            position: fixed;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-color);
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            cursor: pointer;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .icon-btn:hover { background: rgba(255, 255, 255, 0.15); transform: scale(1.1); }
+        .settings-btn { top: 30px; right: 30px; }
+        .fullscreen-btn { bottom: 30px; right: 30px; }
+
+        .side-panel {
+            position: fixed;
+            top: 0;
+            right: -350px;
+            width: 320px;
+            height: 100%;
+            background: rgba(15, 25, 30, 0.98);
+            backdrop-filter: blur(20px);
+            z-index: 1000;
+            transition: right 0.4s ease;
+            padding: 20px 20px;
+            border-left: 1px solid rgba(255,255,255,0.1);
+            overflow-y: auto;
+            color: white !important;
+        }
+
+        .side-panel.open { right: 0; }
+        .panel-close { background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer; float: right; }
+
+        .setting-item { margin-top: 25px; display: flex; flex-direction: column; gap: 8px; text-align: left; }
+        .setting-item label.main-label { font-size: 0.75rem; opacity: 0.7; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 5px; color: white; }
+
+        .checkbox-group { display: flex; justify-content: flex-start; gap: 15px; flex-wrap: wrap; }
+        .checkbox-item { display: flex; align-items: center; gap: 6px; cursor: pointer; padding: 4px 0; }
+        .checkbox-item label { font-size: 0.85rem; cursor: pointer; opacity: 0.9; color: white; }
+        
+        input[type="text"], input[type="datetime-local"], input[type="url"] {
+            padding: 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.05); color: white; outline: none; width: 100%;
+        }
+
+        input[type="color"] {
+            width: 100%; height: 45px; cursor: pointer; padding: 2px;
+            background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 10px; -webkit-appearance: none;
+        }
+        input[type="color"]::-webkit-color-swatch { border: none; border-radius: 8px; }
+
+        input[type="range"] { cursor: pointer; accent-color: #00d2ff; }
+
+        .action-btn {
+            width: 100%; padding: 14px; border-radius: 12px; border: 1px solid white;
+            background: transparent; color: white; cursor: pointer;
+            text-transform: uppercase; letter-spacing: 2px; transition: all 0.3s; font-weight: bold;
+        }
+        .action-btn:hover { background: white; color: black; }
+        .start-btn.running { border-color: #ff4b2b !important; color: #ff4b2b !important; }
+        .share-btn { border-color: #00d2ff; color: #00d2ff; }
+        .share-btn:hover { background: #00d2ff; color: white; }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(5px);
+            display: none; justify-content: center; align-items: center; z-index: 2000;
+        }
+        .modal {
+            background: #1c2e35; padding: 2rem; border-radius: 20px; width: 90%; max-width: 500px;
+            text-align: center; border: 1px solid rgba(255,255,255,0.1); position: relative; color: #ffffff !important;
+        }
+        .url-display {
+            background: rgba(255,255,255,0.08); padding: 15px; border-radius: 10px;
+            margin: 20px 0; word-break: break-all; font-size: 0.85rem; display: flex; align-items: center; gap: 10px;
+        }
+        .copy-btn { background: none; border: none; color: #00d2ff; cursor: pointer; }
+        #copy-toast {
+            position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
+            background: #00d2ff; color: white !important; padding: 5px 15px; border-radius: 20px;
+            font-size: 0.75rem; font-weight: bold; opacity: 0; transition: opacity 0.3s;
+        }
+
+        h1#title { 
+            font-size: var(--title-size); margin-bottom: 2.5rem; letter-spacing: 5px; 
+            font-weight: 300; line-height: 1.2; text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+        }
+
+        .countdown { display: flex; justify-content: center; flex-wrap: wrap; gap: 20px; }
+        .box { display: flex; flex-direction: column; min-width: 110px; }
+        .number {
+            font-size: 3.5rem; font-weight: 700; background: rgba(255, 255, 255, 0.07);
+            padding: 25px 15px; border-radius: 25px; margin-bottom: 10px; border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-color); text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+        .label { font-size: 0.7rem; letter-spacing: 2px; opacity: 0.9; text-transform: uppercase; color: var(--text-color); font-weight: bold; }
+
+        .hidden { display: none !important; }
+        @media (max-width: 600px) { .number { font-size: 1.8rem; } .box { min-width: 70px; } }
+    </style>
+</head>
+<body>
+
+    <button class="icon-btn settings-btn" onclick="togglePanel()" title="Settings">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24-1.13-.56-1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+    </button>
+
+    <button class="icon-btn fullscreen-btn" onclick="toggleFullscreen()" title="Fullscreen">
+        <svg id="fs-icon" viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
+    </button>
+
+    <div id="side-panel" class="side-panel">
+        <button class="panel-close" onclick="togglePanel()">✕</button>
+        <h2 style="margin-top:20px; font-weight: 300; letter-spacing: 2px;">SETTINGS</h2>
+        
+        <div style="margin-top: 20px; display: flex; flex-direction: column; gap: 10px;">
+            <button id="main-action-btn" class="action-btn start-btn" onclick="handleAction()">Start Countdown</button>
+            <button class="action-btn share-btn" onclick="generateShareURL()">CREATE / SHARE URL</button>
+        </div>
+
+        <div class="setting-item">
+            <label class="main-label">TARGET DATE</label>
+            <input type="datetime-local" id="date-input">
+        </div>
+
+        <div class="checkbox-group" style="margin-top: 15px;">
+            <div class="checkbox-item"><input type="checkbox" id="show-hour" checked onchange="updateUnitsVisibility()"><label for="show-hour">Hour</label></div>
+            <div class="checkbox-item"><input type="checkbox" id="show-minute" checked onchange="updateUnitsVisibility()"><label for="show-minute">Min</label></div>
+            <div class="checkbox-item"><input type="checkbox" id="show-second" checked onchange="updateUnitsVisibility()"><label for="show-second">Sec</label></div>
+        </div>
+
+        <div class="checkbox-group" style="margin-top: 15px;">
+            <div class="checkbox-item"><input type="checkbox" id="only-days-mode" onchange="liveUpdateText()"><label for="only-days-mode">Day View</label></div>
+            <div class="checkbox-item"><input type="checkbox" id="exclude-weekend"><label for="exclude-weekend">Exclude Weekends</label></div>
+            <div class="checkbox-item" style="width: 100%;"><input type="checkbox" id="blink-checkbox" checked><label for="blink-checkbox">Finish Warning (Blink)</label></div>
+        </div>
+
+        <hr style="margin-top: 25px; opacity: 0.1;">
+
+        <div class="setting-item">
+            <label class="main-label">VISUALS</label>
+            <input type="url" id="bg-url-input" placeholder="Background Image URL" oninput="updateBackgroundImage(this.value)">
+            <div style="display: flex; gap: 10px; margin-top: 10px;">
+                <div style="flex: 1;"><span style="font-size: 0.6rem; opacity: 0.6;">Theme</span><input type="color" id="color-picker" value="#1c2e35" oninput="updateTheme(this.value)"></div>
+                <div style="flex: 1;"><span style="font-size: 0.6rem; opacity: 0.6;">Text</span><input type="color" id="text-color-picker" value="#ffffff" oninput="updateTextColor(this.value)"></div>
+            </div>
+        </div>
+
+        <div class="setting-item">
+            <label class="main-label">TITLES & SIZE</label>
+            <input type="text" id="custom-title-input" placeholder="Countdown Started" oninput="liveUpdateText()" style="margin-bottom:10px">
+            <input type="text" id="finish-title-input" placeholder="Time Expired!" oninput="liveUpdateText()">
+            <input type="range" id="font-size-slider" min="0.8" max="5" step="0.1" value="1.5" oninput="updateFontSize(this.value)" style="margin-top: 10px;">
+            <span id="font-size-val" style="font-size: 0.8rem; opacity: 0.6; text-align: center;">1.5rem</span>
+        </div>
+
+        <div class="setting-item">
+            <label class="main-label">LABELS (TRANSLATION)</label>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <input type="text" id="lbl-y" placeholder="Years" oninput="updateLabels()">
+                <input type="text" id="lbl-mon" placeholder="Months" oninput="updateLabels()">
+                <input type="text" id="lbl-d" placeholder="Days" oninput="updateLabels()">
+                <input type="text" id="lbl-h" placeholder="Hours" oninput="updateLabels()">
+                <input type="text" id="lbl-m" placeholder="Minutes" oninput="updateLabels()">
+                <input type="text" id="lbl-s" placeholder="Seconds" oninput="updateLabels()">
+            </div>
+        </div>
+    </div>
+
+    <div id="url-modal" class="modal-overlay" onclick="closeModal()">
+        <div class="modal" onclick="event.stopPropagation()">
+            <div id="copy-toast">Copied!</div>
+            <h3>Share Link</h3>
+            <div class="url-display"><span id="generated-url">URL...</span><button class="copy-btn" onclick="copyURL()"><svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg></button></div>
+            <button class="action-btn" onclick="closeModal()" style="border-color: #00d2ff; color: #00d2ff;">CLOSE</button>
+        </div>
+    </div>
+
+    <div class="container" id="main-container">
+        <h1 id="title">Set Target Date</h1>
+        <div class="countdown">
+            <div class="box" id="y-box"><div class="number" id="y">00</div><div class="label" id="ly">Years</div></div>
+            <div class="box" id="mon-box"><div class="number" id="mon">00</div><div class="label" id="lmon">Months</div></div>
+            <div class="box" id="d-box"><div class="number" id="d">00</div><div class="label" id="ld">Days</div></div>
+            <div class="box" id="h-box"><div class="number" id="h">00</div><div class="label" id="lh">Hours</div></div>
+            <div class="box" id="m-box"><div class="number" id="m">00</div><div class="label" id="lm">Minutes</div></div>
+            <div class="box" id="s-box"><div class="number" id="s">00</div><div class="label" id="ls">Seconds</div></div>
+        </div>
+    </div>
+
+    <script>
+        let countdownInterval = null;
+        let isFinished = false;
+
+        function togglePanel() { document.getElementById('side-panel').classList.toggle('open'); }
+        
+        function updateLabels() {
+            document.getElementById('ly').innerText = document.getElementById('lbl-y').value || "Years";
+            document.getElementById('lmon').innerText = document.getElementById('lbl-mon').value || "Months";
+            document.getElementById('ld').innerText = document.getElementById('lbl-d').value || "Days";
+            document.getElementById('lh').innerText = document.getElementById('lbl-h').value || "Hours";
+            document.getElementById('lm').innerText = document.getElementById('lbl-m').value || "Minutes";
+            document.getElementById('ls').innerText = document.getElementById('lbl-s').value || "Seconds";
+        }
+
+        function liveUpdateText() {
+            const titleEl = document.getElementById('title');
+            const ct = document.getElementById('custom-title-input').value.trim();
+            const ft = document.getElementById('finish-title-input').value.trim();
+            if (isFinished) titleEl.innerText = ft || "TIME EXPIRED!";
+            else if (countdownInterval) titleEl.innerText = ct || "Countdown Started";
+            else titleEl.innerText = "Set Target Date";
+        }
+
+        function updateUnitsVisibility() {
+            document.getElementById('h-box').style.display = document.getElementById('show-hour').checked ? 'flex' : 'none';
+            document.getElementById('m-box').style.display = document.getElementById('show-minute').checked ? 'flex' : 'none';
+            document.getElementById('s-box').style.display = document.getElementById('show-second').checked ? 'flex' : 'none';
+        }
+
+        function updateTheme(hex) {
+            const root = document.documentElement;
+            root.style.setProperty('--primary-color', hex);
+            root.style.setProperty('--accent-color', adjustColor(hex, -20));
+        }
+
+        function updateTextColor(hex) { document.documentElement.style.setProperty('--text-color', hex); }
+        function updateFontSize(val) {
+            document.documentElement.style.setProperty('--title-size', val + 'rem');
+            document.getElementById('font-size-val').innerText = val + 'rem';
+        }
+        function updateBackgroundImage(url) {
+            document.documentElement.style.setProperty('--bg-image', url ? `url('${url}')` : 'none');
+        }
+
+        function adjustColor(col, amt) {
+            col = col.replace(/^#/, '');
+            let num = parseInt(col, 16);
+            let r = Math.max(0, Math.min(255, (num >> 16) + amt));
+            let b = Math.max(0, Math.min(255, ((num >> 8) & 0x00FF) + amt));
+            let g = Math.max(0, Math.min(255, (num & 0x0000FF) + amt));
+            return "#" + (g | (b << 8) | (r << 16)).toString(16).padStart(6, '0');
+        }
+
+        function generateShareURL() {
+            const params = new URLSearchParams();
+            const date = document.getElementById('date-input').value;
+            if (date) params.set('date', date);
+            params.set('title', encodeURIComponent(document.getElementById('custom-title-input').value));
+            params.set('end', encodeURIComponent(document.getElementById('finish-title-input').value));
+            params.set('bg', encodeURIComponent(document.getElementById('bg-url-input').value));
+            params.set('theme', document.getElementById('color-picker').value.replace('#', ''));
+            params.set('color', document.getElementById('text-color-picker').value.replace('#', ''));
+            params.set('fs', document.getElementById('font-size-slider').value);
+            ['y','mon','d','h','m','s'].forEach(l => {
+                const val = document.getElementById('lbl-'+l).value;
+                if(val) params.set('l'+l, encodeURIComponent(val));
+            });
+            if (document.getElementById('only-days-mode').checked) params.set('days', '1');
+            if (document.getElementById('exclude-weekend').checked) params.set('work', '1');
+            if (!document.getElementById('blink-checkbox').checked) params.set('blink', '0');
+            if (!document.getElementById('show-hour').checked) params.set('h', '0');
+            if (!document.getElementById('show-minute').checked) params.set('m', '0');
+            if (!document.getElementById('show-second').checked) params.set('s', '0');
+
+            const fullURL = window.location.origin + window.location.pathname + '?' + params.toString();
+            document.getElementById('generated-url').innerText = fullURL;
+            document.getElementById('url-modal').style.display = 'flex';
+        }
+
+        function copyURL() {
+            navigator.clipboard.writeText(document.getElementById('generated-url').innerText).then(() => {
+                const toast = document.getElementById('copy-toast');
+                toast.style.opacity = '1';
+                setTimeout(() => toast.style.opacity = '0', 2000);
+            });
+        }
+        function closeModal() { document.getElementById('url-modal').style.display = 'none'; }
+
+        function getWorkingDiff(target) {
+            let now = new Date(), totalDiff = target.getTime() - now.getTime();
+            if (!document.getElementById('exclude-weekend').checked) return totalDiff;
+            let weekendMs = 0, current = new Date(now);
+            while (current < target) {
+                if (current.getDay() === 0 || current.getDay() === 6) weekendMs += 86400000;
+                current.setDate(current.getDate() + 1); current.setHours(0,0,0,0);
+            }
+            return totalDiff - weekendMs;
+        }
+
+        function handleAction() {
+            if (countdownInterval || isFinished) stopCountdown();
+            else {
+                const date = document.getElementById('date-input').value;
+                if (!date) return alert("Select a date!");
+                startCountdown(date); togglePanel();
+            }
+        }
+
+        function stopCountdown() {
+            clearInterval(countdownInterval); countdownInterval = null; isFinished = false;
+            document.body.classList.remove('alert-active');
+            document.getElementById('main-action-btn').innerText = "Start Countdown";
+            liveUpdateText(); ["y","mon","d","h","m","s"].forEach(i => document.getElementById(i).innerText = "00");
+        }
+
+        function startCountdown(targetStr) {
+            const target = new Date(targetStr);
+            if (isNaN(target.getTime())) return;
+            document.getElementById('main-action-btn').innerText = "Stop Countdown";
+            isFinished = false; countdownInterval = true; liveUpdateText();
+
+            const updateLoop = () => {
+                let diff = getWorkingDiff(target);
+                if (diff <= 0) {
+                    clearInterval(countdownInterval); countdownInterval = null; isFinished = true;
+                    liveUpdateText();
+                    
+                    // START BLINK AND AUTO-STOP AFTER 5 SECONDS
+                    if (document.getElementById('blink-checkbox').checked) {
+                        document.body.classList.add('alert-active');
+                        setTimeout(() => {
+                            document.body.classList.remove('alert-active');
+                        }, 5000);
+                    }
+                    return;
+                }
+                const onlyDays = document.getElementById('only-days-mode').checked;
+                const msD = 86400000, msM = msD * 30.44, msY = msD * 365.25;
+                let yV = 0, monV = 0, dV = 0;
+                if (onlyDays) dV = Math.floor(diff / msD);
+                else { yV = Math.floor(diff / msY); monV = Math.floor((diff % msY) / msM); dV = Math.floor((diff % msM) / msD); }
+                
+                document.getElementById('y-box').className = (!onlyDays && yV > 0) ? 'box' : 'box hidden';
+                document.getElementById('mon-box').className = (!onlyDays && (yV > 0 || monV > 0)) ? 'box' : 'box hidden';
+                document.getElementById('d-box').className = (onlyDays || yV > 0 || monV > 0 || dV > 0) ? 'box' : 'box hidden';
+
+                document.getElementById('y').innerText = yV.toString().padStart(2, '0');
+                document.getElementById('mon').innerText = monV.toString().padStart(2, '0');
+                document.getElementById('d').innerText = dV.toString().padStart(2, '0');
+                document.getElementById('h').innerText = Math.floor((diff % msD) / 3600000).toString().padStart(2, '0');
+                document.getElementById('m').innerText = Math.floor((diff % 3600000) / 60000).toString().padStart(2, '0');
+                document.getElementById('s').innerText = Math.floor((diff % 60000) / 1000).toString().padStart(2, '0');
+            };
+            updateLoop(); countdownInterval = setInterval(updateLoop, 1000);
+        }
+
+        window.onload = () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const container = document.getElementById('main-container');
+            const targetDate = urlParams.get('date');
+            if (targetDate) document.getElementById('date-input').value = targetDate;
+            if (urlParams.get('title')) document.getElementById('custom-title-input').value = decodeURIComponent(urlParams.get('title'));
+            if (urlParams.get('end')) document.getElementById('finish-title-input').value = decodeURIComponent(urlParams.get('end'));
+            const bg = urlParams.get('bg'); if(bg){ const b = decodeURIComponent(bg); document.getElementById('bg-url-input').value = b; updateBackgroundImage(b); }
+            const theme = urlParams.get('theme'); if (theme) { const c = '#'+theme; document.getElementById('color-picker').value = c; updateTheme(c); }
+            const color = urlParams.get('color'); if (color) { const c = '#'+color; document.getElementById('text-color-picker').value = c; updateTextColor(c); }
+            const fs = urlParams.get('fs'); if (fs) { document.getElementById('font-size-slider').value = fs; updateFontSize(fs); }
+            ['y','mon','d','h','m','s'].forEach(l => {
+                const val = urlParams.get('l'+l);
+                if(val) { document.getElementById('lbl-'+l).value = decodeURIComponent(val); }
+            });
+            updateLabels();
+            if (urlParams.get('days') === '1') document.getElementById('only-days-mode').checked = true;
+            if (urlParams.get('work') === '1') document.getElementById('exclude-weekend').checked = true;
+            if (urlParams.get('blink') === '0') document.getElementById('blink-checkbox').checked = false;
+            if (urlParams.get('h') === '0') document.getElementById('show-hour').checked = false;
+            if (urlParams.get('m') === '0') document.getElementById('show-minute').checked = false;
+            if (urlParams.get('s') === '0') document.getElementById('show-second').checked = false;
+
+            updateUnitsVisibility();
+            if (targetDate) startCountdown(targetDate);
+            liveUpdateText();
+            setTimeout(() => container.classList.add('visible'), 50);
+        };
+
+        function toggleFullscreen() { if (!document.fullscreenElement) document.documentElement.requestFullscreen(); else document.exitFullscreen(); }
+    </script>
+</body>
+</html>
